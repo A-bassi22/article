@@ -1,6 +1,5 @@
 <?php
 include("bd.php");
-
 try {
     $pdo = getDbConnection();
 
@@ -12,6 +11,12 @@ try {
     $contenu = trim($_POST['contenu'] ?? '');
     $categorie = trim($_POST['categorie'] ?? '');
     $date = $_POST['date'] ?? '';
+    $date = !empty($date) ? $date : date('Y-m-d');
+    if (empty($titre) || empty($contenu) || empty($categorie) || empty($date)) {
+    die("Veuillez remplir tous les champs obligatoires.");
+}
+
+
 
     if (empty($titre) || empty($contenu) || empty($categorie) || empty($date)) {
         die("Veuillez remplir tous les champs obligatoires.");

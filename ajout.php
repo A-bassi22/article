@@ -112,16 +112,17 @@ try {
                             </div><br>
 
                             <div class="mb-3">
-                                <label for="date" class="form-label fw-bold text-dark d-flex align-items-center">
-                                    <i class="fas fa-date text-primary me-2"></i>
-                                    Date d'Ajout <span class="text-danger ms-1">*</span>
-                                </label>
-                                <input type="date" id="date" name="date" class="form-control form-control-lg rounded-pill" required
-                                    placeholder="Ajouter une date">
-                            </div><br>
+                               <label for="date" class="form-label fw-bold text-dark d-flex align-items-center">
+                                <i class="fas fa-date text-primary me-2"></i>
+                                 Date d'Ajout 
+                                  </label>
+                                  <input type="date" id="date" name="date" class="form-control form-control-lg rounded-pill"
+                                   placeholder="Ajouter une date">
+                                    </div><br>
+
 
                             <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                                <button type="submit" class="btn btn-secondary btn-lg rounded-pill">
                                     <i class="fas fa-plus-circle me-2"></i>
                                     Ajouter l'Article</i>
                                 </button>

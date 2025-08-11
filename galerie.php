@@ -7,7 +7,7 @@ try {
     die("Erreur : Impossible de se connecter à la base de données.");
 }
 
-// Récupération des catégories (sécurisé)
+// Récupération des catégories
 try {
     $categories = $pdo->query("SELECT nom FROM categories ORDER BY id")
                       ->fetchAll(PDO::FETCH_COLUMN);
@@ -16,11 +16,11 @@ try {
     error_log("Erreur SQL catégories : " . $e->getMessage());
 }
 
-// Initialisation des filtres
+// Filtres
 $selectedCategory = isset($_GET['categorie']) ? trim($_GET['categorie']) : '';
 $searchKeyword    = isset($_GET['recherche']) ? trim($_GET['recherche']) : '';
 
-// Requête dynamique avec paramètres
+// Requête dynamique
 $sql = "SELECT * FROM articles WHERE 1";
 $params = [];
 
@@ -35,11 +35,11 @@ if (!empty($searchKeyword)) {
     $params[] = '%' . $searchKeyword . '%';
 }
 
-$sql .= " ORDER BY date_ajout DESC";
+$sql .= " SELECT * FROM articles ORDER BY date_ajout DESC";
 
-try {
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+try {  
+    $stmt = $pdo->prepare("SELECT * FROM articles ORDER BY date_ajout DESC");
+    $stmt->execute();
     $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $articles = [];
@@ -50,19 +50,15 @@ try {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Galerie des Articles</title>
+    <title>Gestion des Articles</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .card-img-top { height: 220px; object-fit: cover; }
-        .stretched-link { z-index: 1; }
-    </style>
 </head>
 <body class="bg-light">
 
 <div class="container py-5">
-    <h1 class="text-center mb-5 text-primary">
-        <i class="fas fa-image me-2"></i>Galerie des Articles
+    <h1 class="text-center mb-5 ">
+        <i class="fas fa-image me-2"></i> Gestion des Articles
     </h1>
 
     <!-- Filtres -->
@@ -84,7 +80,7 @@ try {
                            value="<?= htmlspecialchars($searchKeyword) ?>">
                 </div>
                 <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-secondary">
                         <i class="fas fa-search me-1"></i> Filtrer
                     </button>
                 </div>
@@ -92,45 +88,74 @@ try {
         </div>
 
         <div class="col-md-4 text-end">
-            <a href="ajout.php" class="btn btn-primary rounded-pill">
+            <a href="ajout.php" class="btn btn-secondary rounded-pill">
                 <i class="fas fa-plus me-1"></i> Ajouter un article
             </a>
         </div>
     </div>
 
-    <!-- Liste des articles -->
-    <div class="row">
-        <?php if (empty($articles)) : ?>
-            <p class="text-center text-muted">Aucun article trouvé.</p>
-        <?php else : ?>
-            <?php foreach ($articles as $article): ?>
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm h-100 position-relative">
-                        <a href="details_article.php?id=<?= $article['id'] ?>" class="stretched-link text-decoration-none">
-                            <img src="<?= htmlspecialchars($article['image_principale']) ?>" class="card-img-top" alt="Image de couverture">
-                        </a>
-                        <div class="card-body">
-                            <h5 class="card-title"><?= htmlspecialchars($article['titre']) ?></h5>
-                            <p class="card-text text-muted mb-1">
-                                <strong>Description :</strong>
-                                <?php
+    <!-- Tableau des articles -->
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Image</th> <!-- Nouvelle colonne -->
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Catégorie</th>
+                <th>Date d'ajout</th>
+                <th>Auteur</th>
+                <th class="text-center"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($articles)) : ?>
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Aucun article trouvé.</td>
+                </tr>
+            <?php else : ?>
+                <?php foreach ($articles as $article): ?>
+                    <tr>
+                        <!-- Affichage image -->
+                        <td class="text-center">
+                            <?php if (!empty($article['image_principale'])): ?>
+                                <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
+                                     alt="Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+                            <?php else: ?>
+                                <span class="text-muted">Pas d'image</span>
+                            <?php endif; ?>
+                        </td>
+
+                        <td><?= htmlspecialchars($article['titre']) ?></td>
+                        <td>
+                            <?php
                                 $desc = $article['description'];
                                 echo htmlspecialchars(strlen($desc) > 100 ? mb_substr($desc, 0, 100) . '...' : $desc);
-                                 ?>
-                            </p>
+                            ?>
+                        </td>
+                        <td><?= htmlspecialchars($article['categorie']) ?></td>
+                        <td><?= htmlspecialchars($article['date_ajout']) ?></td>
+                        <td><?= htmlspecialchars($article['user'] ?? 'Inconnu') ?></td>
+                        <td class="text-center">
+                            <a href="details_article.php?id=<?= $article['id'] ?>" class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i> Voir
+                            </a>
+                            <a href="modifier_article.php?id=<?= $article['id'] ?>" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+                            <a href="supprimer_article.php?id=<?= $article['id'] ?>" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Voulez-vous vraiment supprimer cet article ?')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
-                            <p class="card-text text-muted mb-1">
-                                <strong>Catégorie :</strong> <?= htmlspecialchars($article['categorie']) ?>
-                            </p>
-                            <p class="card-text">
-                                <small class="text-muted">Ajouté le : <?= htmlspecialchars($article['date_ajout']) ?></small>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
 </div>
 
 </body>

@@ -53,8 +53,8 @@
               </div>
 
               <div class="d-grid">
-                <button type="submit" class="btn btn-primary btn-lg">
-                  <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                <button type="submit" class="btn btn-secondary btn-lg">
+                  <i class="fas fa-sign-in-alt me-2"></i>Se connecter 
                 </button>
               </div>
             </form>

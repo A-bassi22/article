@@ -16,7 +16,7 @@ try {
     // Vérification du mot de passe
     if ($user && hash('sha256', $password) === $user['password']) {
         // Connexion réussie → redirection vers ajout.php
-        header("Location: ajout.php");
+        header("Location: galerie.php");
         exit;
     } else {
         // Échec → retour avec message d'erreur
