@@ -30,21 +30,30 @@ if (!empty($selectedCategory)) {
 }
 
 if (!empty($searchKeyword)) {
-    $sql .= " AND (titre LIKE ? OR contenu LIKE ?)";
+    $sql .= " AND (titre LIKE ? OR description LIKE ?)";
     $params[] = '%' . $searchKeyword . '%';
     $params[] = '%' . $searchKeyword . '%';
 }
+$sql = "SELECT * FROM articles WHERE 1";
 
-$sql .= " SELECT * FROM articles ORDER BY date_ajout DESC";
-
-try {  
-    $stmt = $pdo->prepare("SELECT * FROM articles ORDER BY date_ajout DESC");
-    $stmt->execute();
-    $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    $articles = [];
-    error_log("Erreur SQL articles : " . $e->getMessage());
+$params = [];
+if (!empty($selectedCategory)) {
+    $sql .= " AND categorie = ?";
+    $params[] = $selectedCategory;
 }
+if (!empty($searchKeyword)) {
+    $sql .= " AND (titre LIKE ? OR description LIKE ?)";
+    $params[] = "%$searchKeyword%";
+    $params[] = "%$searchKeyword%";
+}
+
+$sql .= " ORDER BY date_ajout DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -57,8 +66,8 @@ try {
 <body class="bg-light">
 
 <div class="container py-5">
-    <h1 class="text-center mb-5 ">
-        <i class="fas fa-image me-2"></i> Gestion des Articles
+    <h1 class="text-center mb-5">
+        <i class="fas fa-image me-2"></i> Gestion des articles
     </h1>
 
     <!-- Filtres -->
@@ -85,7 +94,7 @@ try {
                     </button>
                 </div>
             </form>
-        </div>
+        </div><br>
 
         <div class="col-md-4 text-end">
             <a href="ajout.php" class="btn btn-secondary rounded-pill">
@@ -96,67 +105,71 @@ try {
 
     <!-- Tableau des articles -->
     <div class="table-responsive">
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Image</th> <!-- Nouvelle colonne -->
-                <th>Titre</th>
-                <th>Description</th>
-                <th>Catégorie</th>
-                <th>Date d'ajout</th>
-                <th>Auteur</th>
-                <th class="text-center"></th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($articles)) : ?>
+        <table class="table table-bordered table-striped table-hover align-middle">
+            <thead class="table-dark">
                 <tr>
-                    <td colspan="7" class="text-center text-muted">Aucun article trouvé.</td>
+                    <th class="text-center">Image</th> 
+                    <th class="text-center">Titre</th>
+                    <th class="text-center">Description</th>
+                    <th class="text-center">Catégorie</th>
+                    <th class="text-center">Date d'ajout</th>
+                    <th class="text-center">Auteur</th>
+                    <th class="text-center"></th>
                 </tr>
-            <?php else : ?>
-                <?php foreach ($articles as $article): ?>
+            </thead>
+            <tbody>
+                <?php if (empty($articles)) : ?>
                     <tr>
-                        <!-- Affichage image -->
-                        <td class="text-center">
-                            <?php if (!empty($article['image_principale'])): ?>
-                                <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
-                                     alt="Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
-                            <?php else: ?>
-                                <span class="text-muted">Pas d'image</span>
-                            <?php endif; ?>
-                        </td>
-
-                        <td><?= htmlspecialchars($article['titre']) ?></td>
-                        <td>
-                            <?php
-                                $desc = $article['description'];
-                                echo htmlspecialchars(strlen($desc) > 100 ? mb_substr($desc, 0, 100) . '...' : $desc);
-                            ?>
-                        </td>
-                        <td><?= htmlspecialchars($article['categorie']) ?></td>
-                        <td><?= htmlspecialchars($article['date_ajout']) ?></td>
-                        <td><?= htmlspecialchars($article['user'] ?? 'Inconnu') ?></td>
-                        <td class="text-center">
-                            <a href="details_article.php?id=<?= $article['id'] ?>" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye"></i> Voir
-                            </a>
-                            <a href="modifier_article.php?id=<?= $article['id'] ?>" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Modifier
-                            </a>
-                            <a href="supprimer_article.php?id=<?= $article['id'] ?>" 
-                               class="btn btn-danger btn-sm"
-                               onclick="return confirm('Voulez-vous vraiment supprimer cet article ?')">
-                                <i class="fas fa-trash"></i> Supprimer
-                            </a>
-                        </td>
+                        <td colspan="7" class="text-center text-muted">Aucun article trouvé.</td>
                     </tr>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+                <?php else : ?>
+                    <?php foreach ($articles as $article): ?>
+                        <tr>
+                            <td class="text-center" style="width: 90px;">
+                                <?php if (!empty($article['image_principale'])): ?>
+                                    <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
+                                         alt="Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px;">
+                                <?php else: ?>
+                                    <span class="text-muted">Pas d'image</span>
+                                <?php endif; ?>
+                            </td>
 
-</div>
+                            <td><?= htmlspecialchars($article['titre']) ?></td>
+                            <td>
+                                <?php
+                                    $desc = $article['description'];
+                                    echo htmlspecialchars(mb_strlen($desc) > 100 ? mb_substr($desc, 0, 100) . '...' : $desc);
+                                ?>
+                            </td>
+                            <td><?= htmlspecialchars($article['categorie']) ?></td>
+                            <td><?= htmlspecialchars($article['date_ajout']) ?></td>
+                            <td><?= htmlspecialchars($article['auteur'] ?? 'Inconnu') ?></td>
+                            <td class="text-center" style="white-space: nowrap;">
+                                <a href="details_article.php?id=<?= $article['id'] ?>" class="btn btn-primary btn-sm me-1" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="modifier_article.php?id=<?= $article['id'] ?>" class="btn btn-warning btn-sm me-1" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
 
+                                <button class="btn btn-danger btn-sm" title="Supprimer" onclick="supprimerArticle(<?= $article['id'] ?>)">
+                                   <i class="fas fa-trash"></i>
+                                   </button>
+
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+function supprimerArticle(id) {
+    if (confirm("Voulez-vous vraiment supprimer cet article ? Cette action est irréversible.")) {
+        window.location.href = "supprimer_article.php?id=" + id;
+    }
+}
+</script>
 </body>
 </html>

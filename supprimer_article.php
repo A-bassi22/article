@@ -2,28 +2,53 @@
 include 'bd.php';
 $pdo = getDbConnection();
 
-if (isset($_GET['id']) && isset($_GET['article_id'])) {
-    $id = intval($_GET['id']);
-    $article_id = intval($_GET['article_id']);
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $article_id = (int)$_GET['id'];
 
-    // Récupérer le chemin de l'image
-    $stmt = $pdo->prepare("SELECT image_path FROM images WHERE id = ?");
-    $stmt->execute([$id]);
-    $image = $stmt->fetch(PDO::FETCH_ASSOC);
+    try {
+        // Récupérer l'article avec son image principale
+        $stmt = $pdo->prepare("SELECT image_principale FROM articles WHERE id = ?");
+        $stmt->execute([$article_id]);
+        $article = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($image) {
-        // Supprimer le fichier du serveur
-        if (file_exists($image['image_path'])) {
-            unlink($image['image_path']);
+        if (!$article) {
+            die("Article introuvable.");
         }
 
-        // Supprimer l'enregistrement de la base
-        $stmt = $pdo->prepare("DELETE FROM images WHERE id = ?");
-        $stmt->execute([$id]);
+        // Supprimer l'image principale du serveur si elle existe
+        if (!empty($article['image_principale']) && file_exists($article['image_principale'])) {
+            unlink($article['image_principale']);
+        }
+
+        // Récupérer toutes les images de la galerie associées à l'article
+        $stmt = $pdo->prepare("SELECT fichier FROM gallerie_images WHERE article_id = ?");
+        $stmt->execute([$article_id]);
+        $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Supprimer physiquement chaque image de la galerie
+        foreach ($images as $img) {
+            if (!empty($img['fichier']) && file_exists($img['fichier'])) {
+                unlink($img['fichier']);
+            }
+        }
+
+        // Supprimer les entrées dans la table gallerie_images
+        $stmt = $pdo->prepare("DELETE FROM gallerie_images WHERE article_id = ?");
+        $stmt->execute([$article_id]);
+
+        // Supprimer l'article
+        $stmt = $pdo->prepare("DELETE FROM articles WHERE id = ?");
+        $stmt->execute([$article_id]);
+
+        // Redirection vers la galerie avec message de succès
+        header("Location: galerie.php?deleted=1");
+        exit;
+
+    } catch (Exception $e) {
+        die("Erreur lors de la suppression : " . $e->getMessage());
     }
 
-    // Retour à la page de l'article
-    header("Location: details_articles.php?id=" . $article_id);
-    exit;
+} else {
+    die("ID article invalide.");
 }
 ?>

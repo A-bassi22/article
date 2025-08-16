@@ -1,5 +1,6 @@
 <?php
 include("bd.php");
+
 try {
     $pdo = getDbConnection();
 
@@ -12,11 +13,6 @@ try {
     $categorie = trim($_POST['categorie'] ?? '');
     $date = $_POST['date'] ?? '';
     $date = !empty($date) ? $date : date('Y-m-d');
-    if (empty($titre) || empty($contenu) || empty($categorie) || empty($date)) {
-    die("Veuillez remplir tous les champs obligatoires.");
-}
-
-
 
     if (empty($titre) || empty($contenu) || empty($categorie) || empty($date)) {
         die("Veuillez remplir tous les champs obligatoires.");
@@ -52,10 +48,10 @@ try {
         die("Image de couverture requise.");
     }
 
-    // Chemin relatif à stocker en base
+    // Chemin relatif à stocker en base (pour affichage ultérieur)
     $image_principale_chemin = 'uploads/' . $image_principale;
 
-    // Insertion article avec chemin complet en base
+    // Insertion article avec chemin image principale en base
     $stmt = $pdo->prepare("INSERT INTO articles (titre, description, categorie, image_principale, date_ajout) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$titre, $contenu, $categorie, $image_principale_chemin, $date]);
 
@@ -78,7 +74,7 @@ try {
 
                 if (move_uploaded_file($_FILES['images']['tmp_name'][$index], $target)) {
                     // Chemin relatif à stocker en base
-                    $fichier_chemin = '/uploads/' . $file_name;
+                    $fichier_chemin = 'uploads/' . $file_name;
 
                     $stmtImg = $pdo->prepare("INSERT INTO gallerie_images (article_id, fichier) VALUES (?, ?)");
                     $stmtImg->execute([$id_article, $fichier_chemin]);
