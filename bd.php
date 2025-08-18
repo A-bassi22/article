@@ -27,13 +27,6 @@ function getDbConnection() {
     }
 }
 
-/**
- * Upload d'une image dans le dossier /uploads/
- * 
- * @param array $fichier Tableau $_FILES['...']
- * @return string Chemin relatif du fichier uploadé (ex: uploads/nom.jpg)
- * @throws Exception si erreur
- */
 function gererUploadImage(array $fichier): string {
     // Validation basique
     if (!isset($fichier['tmp_name'], $fichier['type'], $fichier['size'], $fichier['error'])) {
@@ -85,8 +78,8 @@ function gererUploadImage(array $fichier): string {
  * Insérer un article dans la base
  */
 function insererArticle(PDO $pdo, array $donnees): int {
-    $sql = "INSERT INTO articles (titre, description, categorie, image_principale, date_ajout) 
-            VALUES (:titre, :description, :categorie, :image_principale, :date_ajout)";
+    $sql = "INSERT INTO articles (titre, description, categorie, image_principale,auteur, date_ajout) 
+            VALUES (:titre, :description, :categorie, :image_principale,auteur, :date_ajout)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($donnees);
     return (int)$pdo->lastInsertId();
@@ -99,12 +92,12 @@ function insererImagesSupplementaires(PDO $pdo, int $article_id, array $chemins_
     if (empty($chemins_images)) {
         return;
     }
-    $sql = "INSERT INTO images (article_id, image_path) VALUES (:article_id, :image_path)";
+    $sql = "INSERT INTO images (article_id, fichier) VALUES (:article_id, :fichier)";
     $stmt = $pdo->prepare($sql);
     foreach ($chemins_images as $chemin) {
         $stmt->execute([
             ':article_id' => $article_id,
-            ':image_path' => $chemin
+            ':fichier' => $chemin
         ]);
     }
 }

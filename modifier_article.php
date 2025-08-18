@@ -1,9 +1,9 @@
 <?php
+session_start();
 require_once("bd.php");
+include("header.php");
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    die("ID article invalide.");
-}
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) die("ID article invalide.");
 $id = (int) $_GET['id'];
 
 try {
@@ -13,17 +13,16 @@ try {
     $stmt = $pdo->prepare("SELECT * FROM articles WHERE id = ?");
     $stmt->execute([$id]);
     $article = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$article) {
-        die("Article introuvable.");
-    }
+    if (!$article) die("Article introuvable.");
 
-    // Récupérer les images de la galerie
+    // Liste des catégories
+    $stmtCat = $pdo->query("SELECT DISTINCT categorie FROM articles ORDER BY categorie ASC");
+    $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+
+    // Galerie d’images
     $stmtImg = $pdo->prepare("SELECT * FROM gallerie_images WHERE article_id = ?");
     $stmtImg->execute([$id]);
-    $gallery = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
-
-    // Récupérer les catégories
-    $categories = $pdo->query("SELECT nom FROM categories ORDER BY nom")->fetchAll(PDO::FETCH_COLUMN);
+    $images = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
     die("Erreur : " . $e->getMessage());
@@ -33,100 +32,92 @@ try {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<title>Modifier l'article et la galerie</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+<meta charset="UTF-8">
+<title>Modifier l'article</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 <div class="container py-5">
-
-<h1 class="mb-4">Modifier l'article</h1>
-
-<!-- Formulaire modification article -->
-<form action="traiter_modifier_article.php?id=<?= $id ?>" method="post" enctype="multipart/form-data">
+    <div> 
+        <a href="accueil.php" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
+           </a>
+     <h2>Modifier l'article</h2>
+      </div>
+<form action="traiter_modifier_article.php" method="POST" enctype="multipart/form-data" class="p-4 bg-white rounded shadow-sm">
+    <input type="hidden" name="id" value="<?= htmlspecialchars($article['id']) ?>">
     <div class="mb-3">
-        <label for="titre" class="form-label">Titre *</label>
-        <input type="text" id="titre" name="titre" class="form-control" required value="<?= htmlspecialchars($article['titre']) ?>">
+        <label>Titre :</label>
+        <input type="text" class="form-control" name="titre" value="<?= htmlspecialchars($article['titre']) ?>" required>
     </div>
 
     <div class="mb-3">
-        <label for="description" class="form-label">Description *</label>
-        <textarea id="description" name="description" class="form-control" rows="5" required><?= htmlspecialchars($article['description']) ?></textarea>
+        <label>Description :</label>
+        <textarea class="form-control" name="description" rows="4" required><?= htmlspecialchars($article['description']) ?></textarea>
     </div>
 
     <div class="mb-3">
-        <label for="categorie" class="form-label">Catégorie *</label>
-        <select id="categorie" name="categorie" class="form-select" required>
-            <option value="">-- Sélectionnez --</option>
-            <?php foreach ($categories as $cat): ?>
-                <option value="<?= htmlspecialchars($cat) ?>" <?= ($cat === $article['categorie']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($cat) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label>Catégorie :</label>
+        <select name="categorie" class="form-select" required>
+                <option value="">-- Choisissez une catégorie --</option>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?= htmlspecialchars($cat['nom']) ?>"><?= htmlspecialchars($cat['nom']) ?></option>
+                <?php endforeach; ?>
+            </select>
     </div>
 
     <div class="mb-3">
-        <label class="form-label">Image principale actuelle</label><br>
-        <?php if (!empty($article['image_principale'])): ?>
-            <img src="<?= htmlspecialchars($article['image_principale']) ?>" alt="Image principale" style="max-width: 200px; height: auto; border-radius: 6px;">
+        <label>Date d'ajout :</label>
+        <input type="date" class="form-control" name="date_ajout" value="<?= htmlspecialchars($article['date_ajout']) ?>">
+        <small class="text-muted">Laisser vide pour conserver l'ancienne date</small>
+    </div>
+
+    <div class="mb-3">
+        <label>Image principale actuelle :</label><br>
+        <?php if (!empty($article['image_principale']) && file_exists($article['image_principale'])): ?>
+            <img src="<?= htmlspecialchars($article['image_principale']) ?>" style="max-height:250px;"><br>
         <?php else: ?>
-            <p class="text-muted">Pas d'image principale</p>
+            <p>Aucune image</p>
         <?php endif; ?>
     </div>
 
     <div class="mb-3">
-        <label for="image_principale" class="form-label">Changer l'image principale (laisser vide pour garder l'actuelle)</label>
-        <input type="file" id="image_principale" name="image_principale" accept="image/*" class="form-control" />
+        <label>Changer l'image principale :</label>
+        <input type="file" name="image_principale" accept="image/*" class="form-control">
     </div>
-
-    <div class="mb-3">
-        <label for="auteur" class="form-label">Auteur</label>
-        <input type="text" id="auteur" name="auteur" class="form-control" value="<?= htmlspecialchars($article['auteur'] ?? '') ?>">
-    </div>
-
-    <!--<div class="mb-3">
-        <label for="date_ajout" class="form-label">Date d'ajout *</label>
-        <input type="date" id="date_ajout" name="date_ajout" class="form-control" required value="<?= htmlspecialchars($article['date_ajout']) ?>">
-    </div> -->
-
-    <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-    <a href="details_article.php?id=<?= $id ?>" class="btn btn-secondary ms-2">Annuler</a>
-</form>
-
-<hr class="my-5">
-
-<h2>Galerie d'images</h2>
-
-<?php if (count($gallery) === 0): ?>
-    <p>Aucune image dans la galerie.</p>
-<?php else: ?>
-    <div class="row">
-        <?php foreach ($gallery as $img): ?>
-            <div class="col-md-3 mb-4 text-center">
-                <img src="<?= htmlspecialchars($img['fichier']) ?>" class="img-fluid img-thumbnail" alt="Image galerie" style="max-height: 150px; object-fit: cover; border-radius: 6px;">
-                <form method="post" action="supprimer_image_galerie.php" onsubmit="return confirm('Supprimer cette image ?');">
-                    <input type="hidden" name="image_id" value="<?= $img['id'] ?>">
-                    <input type="hidden" name="article_id" value="<?= $id ?>">
-                    <button type="submit" class="btn btn-danger btn-sm mt-2">
-                        <i class="fas fa-trash"></i> Supprimer
-                    </button>
-                </form>
+   <hr>
+<h4>Galerie d'images</h4>
+<?php if (count($images) > 0): ?>
+    <div class="row mb-3">
+        <?php foreach ($images as $img): ?>
+            <div class="col-md-3 text-center mb-2">
+                <img src="<?= htmlspecialchars($img['fichier'] ?? '') ?>" class="img-thumbnail" style="max-height:200px;"><br>
+                <a href="supprimer_image.php?id=<?= $img['id'] ?>" 
+                   class="btn btn-danger btn-sm" 
+                   onclick="return confirm('Supprimer cette image ?')">
+                   Supprimer
+                </a>
             </div>
         <?php endforeach; ?>
     </div>
+<?php else: ?>
+    <p>Aucune image dans la galerie.</p>
 <?php endif; ?>
 
-<h3>Ajouter des images à la galerie</h3>
-<form action="ajouter_images_galerie.php" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="article_id" value="<?= $id ?>">
-    <div class="mb-3">
-        <input type="file" name="images[]" multiple accept="image/*" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-success">Ajouter</button>
-</form>
-
+<div class="mb-3">
+    <label>Ajouter des images à la galerie :</label>
+    <input type="file" name="images[]" multiple accept="image/*" class="form-control">
 </div>
+
+<div class="text-end">
+    <button type="submit" class="btn btn-primary"> Confirmer la modification</button>
+</div>
+<input type="hidden" name="auteur" value="<?= htmlspecialchars($_SESSION['username']) ?>">
+
+    
+
+</form>
+</div>
+<?php include("footer.php"); ?>
 </body>
 </html>

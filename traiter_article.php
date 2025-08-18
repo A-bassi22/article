@@ -1,5 +1,7 @@
 <?php
+session_start();
 include("bd.php");
+$username = $_SESSION['username'] ?? 'Inconnu';
 
 try {
     $pdo = getDbConnection();
@@ -12,7 +14,7 @@ try {
     $contenu = trim($_POST['contenu'] ?? '');
     $categorie = trim($_POST['categorie'] ?? '');
     $date = $_POST['date'] ?? '';
-    $date = !empty($date) ? $date : date('Y-m-d');
+    $date = !empty($date) ? $date : date('Y-m-d\TH:i');
 
     if (empty($titre) || empty($contenu) || empty($categorie) || empty($date)) {
         die("Veuillez remplir tous les champs obligatoires.");
@@ -52,8 +54,9 @@ try {
     $image_principale_chemin = 'uploads/' . $image_principale;
 
     // Insertion article avec chemin image principale en base
-    $stmt = $pdo->prepare("INSERT INTO articles (titre, description, categorie, image_principale, date_ajout) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$titre, $contenu, $categorie, $image_principale_chemin, $date]);
+   $stmt = $pdo->prepare("INSERT INTO articles (titre, description, categorie, image_principale, date_ajout, auteur) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt->execute([$titre, $contenu, $categorie, $image_principale_chemin, $date, $username]);
+
 
     $id_article = $pdo->lastInsertId();
 
@@ -83,7 +86,7 @@ try {
         }
     }
 
-    header("Location: galerie.php?success=1");
+    header("Location: accueil.php?success=1");
     exit();
 
 } catch (Exception $e) {
