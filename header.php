@@ -2,7 +2,13 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once("bd.php");
 $username = $_SESSION['username'] ?? null;
+try {
+    $pdo = getDbConnection();
+} catch (Exception $e) {
+    die("Erreur : Impossible de se connecter à la base de données.");
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -69,24 +75,52 @@ $username = $_SESSION['username'] ?? null;
             padding: 70px 20px 20px 20px;
             width: calc(100% - 220px);
         }
+        .image-center {
+    display: flex;        
+    justify-content: center;
+    align-items: center;  
+    height: 100px;      
+}
     </style>
 </head>
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <h2>Menu</h2>
-
+        
+         <div class="image-center">
+    <img src="imag.jpg" style="width:  120px; height: 90px">
+</div>
         <ul>
-            <li class="active"><a href="accueil.php" style="color:inherit; text-decoration:none;">Accueil</a></li>
-            <li><a href="ajout.php" style="color:inherit; text-decoration:none;">Ajouter un article</a></li>
-            <li><a href ="categorie.php" style ="color:inherit; text-decoration:none;">Catégorie</a></li>
+    <li>
+        <a href="accueil" style="color:inherit; text-decoration:none;">
+            <i class="fas fa-home"></i> Accueil
+        </a>
+    </li>
+    <li>
+        <a href="ajout" style="color:inherit; text-decoration:none;">
+            <i class="fas fa-sign"></i> Ajouter un article
+        </a>
+    </li>
+    <li>
+        <a href="categorie" style="color:inherit; text-decoration:none;">
+            <i class="fas fa-tasks"></i> Catégorie
+        </a>
+    </li>
+</ul>
+        <ul>
+            <li>
+                <a href ="utilisateur" style ="color:inherit; text-decoration:none;">
+                <i class= "fas fa-user"></I> Utilisateur
+                </a>
+             </li>   
         </ul>
-        <ul>
-            <li><a href="utlisateur.php" style="color:inherit; text-decoration:none;">Utilisateur</a></li>
-        </ul><br>
-       
          <ul>
-            <li><a href="index.php" style="color:white; text-decoration:none;"> Déconnexion</a></li>
+            <li>
+        <a href="logout" style="color:white; text-decoration:none;">
+        <i class="fas fa-sign-out-alt"></i> Déconnexion
+    </a>
+</li>
+
         </ul>
     </div>
 
@@ -94,9 +128,7 @@ $username = $_SESSION['username'] ?? null;
     <div class="topbar">
         <div></div>
         <div>
-            Bienvenue <strong> <?= htmlspecialchars($article['username'] ?? 'Inconnu') ?></strong> 
+            Bienvenue <strong> <?= htmlspecialchars($_SESSION['username']) ?></strong> 
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">

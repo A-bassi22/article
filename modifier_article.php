@@ -1,8 +1,15 @@
 <?php
 session_start();
 require_once("bd.php");
-include("header.php");
+$_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();}
+include "inc/header.php";
 
+if (!isset($_SESSION['username'])) {
+    die("vous n'est pas connecter");
+}
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) die("ID article invalide.");
 $id = (int) $_GET['id'];
 
@@ -29,15 +36,7 @@ try {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Modifier l'article</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<div class="container py-5">
+  <div class="main-content">
     <div> 
         <a href="accueil.php" class="btn btn-secondary mb-3">
             <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
@@ -110,7 +109,7 @@ try {
 </div>
 
 <div class="text-end">
-    <button type="submit" class="btn btn-primary"> Confirmer la modification</button>
+    <button type="submit" class="btn btn-secondary"> Confirmer la modification</button>
 </div>
 <input type="hidden" name="auteur" value="<?= htmlspecialchars($_SESSION['username']) ?>">
 

@@ -1,0 +1,19 @@
+RewriteEngine On
+
+RewriteRule ^accueil$ accueil.php [L]
+RewriteRule ^home$ accueil.php [L]
+RewriteRule ^ajout$ ajout.php [L]
+RewriteRule ^connexion$ index.php [L]
+RewriteRule ^login$ index.php [L]
+RewriteRule ^categorie$ categorie.php [L]
+RewriteRule ^catégorie$ categorie.php [L]
+RewriteRule ^detail$ details_article.php [L]
+RewriteRule ^modifier$ modifier_article.php [L]
+RewriteRule ^edit$ modifier_article.php [L]
+RewriteRule ^supprimer$ supprimer_article.php [L]
+RewriteRule ^utilisateur$ utilisateur.php [L]
+RewriteRule ^user$ utilisateur.php [L]
+RewriteRule ^compte$ utilisateur.php [L]
+RewriteRule ^logout$ logout.php [L]
+RewriteRule ^Deconnexion$ logout.php [L]
+

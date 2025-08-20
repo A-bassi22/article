@@ -3,7 +3,7 @@ session_start();
   $_SESSION['username'] = $row['nom_utilisateur'];
 require ("bd.php"); // On inclut la connexion
 
-// Récupération des valeurs du formulaire
+
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';
 

@@ -1,8 +1,15 @@
 <?php
 session_start();
-require_once("bd.php"); 
-include("header.php");
+require_once("bd.php");
+$_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();}
+include "inc/header.php";
 
+if (!isset($_SESSION['username'])) {
+    die("vous n'est pas connecter");
+}
 // Vérifier si le formulaire est soumis
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
@@ -41,17 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<?php 
+include "inc/header.php";
+?>
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un utilisateur</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container mt-4">
+    <div class="main-content">
         <h2>Ajouter un utilisateur</h2>
 
         <?php if(isset($error)) : ?>
@@ -71,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="password" class="form-label">Mot de passe</label>
                 <input type="password" name="password" id="password" class="form-control" required>
             </div>
-            <button type="submit" name="submit" class="btn btn-primary">Ajouter</button>
+            <button type="submit" name="submit" class="btn btn-secondary mb-3">Ajouter</button>
         </form>
     </div>
     <?php include("flooter.php"); ?>

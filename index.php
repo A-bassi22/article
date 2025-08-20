@@ -1,9 +1,13 @@
-
 <?php
   session_start();
-
+  if (isset($_SESSION['username'])) {
+    echo "<script>
+        // Reviens à la page précédente dans l'historique
+        window.history.back();
+    </script>"; 
+    exit();
+}
 $_SESSION['username'] = $username;
-
  if (isset($_GET['erreur'])): ?>
   <script>
     document.addEventListener("DOMContentLoaded", () => {

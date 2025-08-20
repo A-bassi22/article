@@ -1,7 +1,11 @@
 <?php
 session_start();
 require_once("bd.php");
-include("header.php");
+$_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();}
+include "inc/header.php";
 date_default_timezone_set('Africa/Niamey');
 
 if (!isset($_SESSION['username'])) {
@@ -16,19 +20,10 @@ try {
     $categories = [];
 }
 ?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Ajouter un article</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
-<div class="container">
+  <div class="main-content">
     <form action="traiter_article.php" method="POST" enctype="multipart/form-data">
         <div class="mb-3">
-            <h3>Ajouter  un article</h3>
+            <h2>Ajouter  un article</h2>
             <label class="form-label fw-bold">Titre</label>
             <input type="text" name="titre" class="form-control" required>
         </div>
@@ -67,8 +62,8 @@ try {
 
         <input type="hidden" name="auteur" value="<?= htmlspecialchars($username) ?>">
 
-        <button type="submit" class="btn btn-success">
-            <i class="fas fa-save me-1"></i> Enregistrer
+        <button type="submit" class="btn btn-secondary mb-3">
+            <i class="fas fa-save me-1"></i> Enregistrer 
         </button>
     </form>
 </div>
