@@ -51,7 +51,7 @@ include "inc/header.php";
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Filtres -->
+
         <div class="row mb-4">
             <div class="col-md-8">
                 <form method="get" class="row gx-2 gy-2">
@@ -89,7 +89,7 @@ include "inc/header.php";
                      <th>Catégorie</th>
                      <th>Date d'ajout</th>
                      <th>Auteur</th>
-                     <th class="text-center"></th>
+                     <th class="text-center"> Actions</th>
                   </tr>
               </thead>
 

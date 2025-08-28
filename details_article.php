@@ -5,7 +5,6 @@ require_once("bd.php");
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();} 
-include "inc/header.php";
 
 if (!isset($_SESSION['username'])) {
     die("vous n'est pas connecter");
@@ -79,7 +78,6 @@ include "inc/header.php";
     <div class="card p-4 shadow-sm">
         <h1 class="mb-3"><?= htmlspecialchars($article['titre']) ?></h1>
 
-        <!-- Image principale (cliquable en plein écran) -->
         <div class="text-center mb-4">
             <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
                  alt="Image de couverture" 
@@ -117,7 +115,6 @@ include "inc/header.php";
 
 </div>
 
-<!-- Modal Bootstrap pour afficher les images en plein écran -->
 <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-fullscreen">
     <div class="modal-content">
