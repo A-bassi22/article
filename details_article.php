@@ -38,99 +38,207 @@ try {
 ?>
 
     <style>
-    
-        #imagePleinEcran {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-        }
-        .modal-content {
-            background: transparent;
-            border: none;
-            text-align: center;
-        }
-        .nav-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 2rem;
-            color: white;
-            cursor: pointer;
-            user-select: none;
-        }
-        .nav-arrow.left {
-            left: 20px;
-        }
-        .nav-arrow.right {
-            right: 20px;
-        }
-    </style>
-    <?php 
-include "inc/header.php";
-?>
-  <div class="main-content">
-    <div>
-        <a href="accueil" class="btn btn-secondary mb-3">
-            <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
-        </a>    
-    <h2 class="mb-4">Détails de l'article</h2>
-    </div>
-    <div class="card p-4 shadow-sm">
-        <h1 class="mb-3"><?= htmlspecialchars($article['titre']) ?></h1>
+    /* Style classique et sobre */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+    }
+    .main-content {
+        background-color: #f9f9f9;
+        padding: 2rem 0;
+    }
+    .content {
+        background: white;
+        padding: 2.5rem;
+        border: 1px solid #e1e1e1;
+        border-radius: 6px;
+    }
+    h1, h2, h3 {
+        font-weight: 600;
+        color: #222;
+    }
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+    }
+    h3 {
+        font-size: 1.3rem;
+        margin-top: 2.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #eee;
+    }
+    p {
+        margin-bottom: 1rem;
+    }
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
 
-        <div class="text-center mb-4">
-            <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
-                 alt="Image de couverture" 
-                 class="img-fluid" 
-                 style="max-width:300px; height:auto; border-radius: 5px; cursor:pointer;"
-                 data-bs-toggle="modal" 
-                 data-bs-target="#lightboxModal" 
-                 onclick="ouvrirImage(0)">
-        </div>
+    /* Image principale */
+    .image-principale {
+        max-width: 300px;
+        height: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 1.5rem auto;
+        display: block;
+    }
 
-        <p><strong>Description :</strong><br /><?= nl2br(htmlspecialchars($article['description'])) ?></p>
-        <p class="text-muted">Auteur : <?= htmlspecialchars($article['auteur']) ?></p>
-        <p><strong>Catégorie :</strong> <?= htmlspecialchars($article['categorie']) ?></p>
-        <p><strong>Date d'ajout :</strong> <?= htmlspecialchars($article['date_ajout']) ?></p>
-    </div>
+    /* Galerie classique */
+    .galerie-item {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .galerie-image {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .galerie-image:hover {
+        border-color: #ccc;
+    }
+    .galerie-actions {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .galerie-actions a {
+        color: #007bff;
+        text-decoration: none;
+        margin: 0 0.5rem;
+    }
+    .galerie-actions a:hover {
+        text-decoration: underline;
+    }
 
-    <h3 class="mt-5 mb-3">Galerie d'images</h3>
-    <?php if (!empty($gallerie_images)): ?>
-        <div class="row g-3">
-            <?php foreach ($gallerie_images as $index => $img): ?>
-                <div class="col-6 col-md-3 text-center">
-                    <img src="<?= htmlspecialchars($img['fichier']) ?>" 
-                         class="img-fluid img-thumbnail"
-                         alt="Image galerie"
-                         style="cursor:pointer;"
-                         data-bs-toggle="modal"
-                         data-bs-target="#lightboxModal"
-                         onclick="ouvrirImage(<?= $index+1 ?>)">
+    /* Lightbox sobre */
+    #imagePleinEcran {
+        max-width: 90%;
+        max-height: 85vh;
+        object-fit: contain;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .modal-content {
+        background: white;
+        border: none;
+        text-align: center;
+        padding: 1rem;
+    }
+    .modal-header {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .nav-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2rem;
+        color: #555;
+        cursor: pointer;
+        user-select: none;
+        background: rgba(255,255,255,0.7);
+        padding: 0.5rem;
+        border-radius: 50%;
+    }
+    .nav-arrow:hover {
+        background: rgba(255,255,255,0.9);
+    }
+    .nav-arrow.left {
+        left: 30px;
+    }
+    .nav-arrow.right {
+        right: 30px;
+    }
+     {
+    outline: 1px solid red;
+}
+</style>
+
+<?php include "inc/header.php"; ?>
+
+<div class="main-content">
+<div class="d-flex justify-content-center" style="padding: 40px 20px;">
+        <div class="content w-100" style="max-width: 1100px;">
+          <div class="text-center mb-4">
+                <h1 class="h3 fw-bold">Détails de l'article</h1>
+            </div>
+            <a href="accueil" class="btn btn-secondary mb-4">
+                <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
+            </a>
+
+            <div class="card p-4">
+                <h2 class="mb-3"><?= htmlspecialchars($article['titre']) ?></h2>
+
+                <div class="text-center">
+                    <img src="<?= htmlspecialchars($article['image_principale']) ?>" 
+                         alt="Image de couverture" 
+                         class="image-principale"
+                         data-bs-toggle="modal" 
+                         data-bs-target="#lightboxModal" 
+                         onclick="ouvrirImage(0)">
                 </div>
-            <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <p>Aucune image dans la galerie.</p>
-    <?php endif; ?>
 
+                <p><strong>Description :</strong><br><?= nl2br(htmlspecialchars($article['description'])) ?></p>
+                <p><strong>Auteur :</strong> <?= htmlspecialchars($article['auteur']) ?></p>
+                <p><strong>Catégorie :</strong> <?= htmlspecialchars($article['categorie']) ?></p>
+                <p><strong>Date d'ajout :</strong> <?= htmlspecialchars($article['date_ajout']) ?></p>
+              </div>
+
+            <h3>Galerie d'images</h3>
+
+            <?php if (!empty($gallerie_images)): ?>
+                <div class="row">
+                    <?php foreach ($gallerie_images as $index => $img): ?>
+                        <div class="col-md-6 col-lg-4 col-xl-3 galerie-item">
+                            <img src="<?= htmlspecialchars($img['fichier']) ?>" 
+                                 alt="Image galerie" 
+                                 class="galerie-image"
+                                 data-bs-toggle="modal" 
+                                 data-bs-target="#lightboxModal" 
+                                 onclick="ouvrirImage(<?= $index + 1 ?>)">
+                            <div class="galerie-actions">
+                                <a href="<?= htmlspecialchars($img['fichier']) ?>" class="img-lightbox">Voir en grand</a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+            
+            <?php else: ?>
+                <p class="text-muted">Aucune image dans la galerie.</p>
+            <?php endif; ?>
+
+        </div>
+    </div>
 </div>
 
+<!-- Lightbox Modal -->
 <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-fullscreen">
-    <div class="modal-content">
-        <div class="modal-header border-0">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-          &larr; Retour
-        </button>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
-      </div>
-      <div class="modal-body position-relative">
-        <span class="nav-arrow left" onclick="changerImage(-1)">&#10094;</span>
-        <img id="imagePleinEcran" src="" class="img-fluid rounded shadow">
-        <span class="nav-arrow right" onclick="changerImage(1)">&#10095;</span>
-      </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header justify-content-between">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                    &larr; Retour
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body position-relative">
+                <span class="nav-arrow left" onclick="changerImage(-1)">&#10094;</span>
+                <img id="imagePleinEcran" src="" class="img-fluid">
+                <span class="nav-arrow right" onclick="changerImage(1)">&#10095;</span>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
@@ -153,9 +261,11 @@ function changerImage(direction) {
     if (currentIndex >= images.length) currentIndex = 0;
     document.getElementById('imagePleinEcran').src = images[currentIndex];
 }
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<?php include("footer.php"); ?>
+// Optionnel : Magnific Popup si tu veux garder le comportement galerie
+// $(document).ready(function() {
+//     $('.img-lightbox').magnificPopup({type:'image', gallery:{enabled:true}});
+// });
+</script>
 </body>
 </html>

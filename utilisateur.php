@@ -3,7 +3,6 @@ session_start();
 require_once("bd.php");
 $_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
 
-// Vérification de session
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
@@ -20,7 +19,7 @@ if (isset($_GET['delete'])) {
     $id = (int) $_GET['delete'];
     $stmt = $pdo->prepare("DELETE FROM utilisateurs WHERE id = :id");
     $stmt->execute([':id' => $id]);
-    header("Location: utilisateurs.php?deleted=1");
+    header("Location: utilisateurs.php?success=delete");
     exit();
 }
 
@@ -28,8 +27,9 @@ if (isset($_GET['delete'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $mail     = trim($_POST['mail'] ?? '');
 
-    if ($username === "" || $password === "") {
+    if ($username === "" || $password === "" || $mail === "") {
         $error = "Tous les champs sont obligatoires.";
     } else {
         try {
@@ -41,12 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
                 $error = "Ce nom d'utilisateur existe déjà.";
             } else {
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO utilisateurs (username, password) VALUES (:username, :password)");
+                $stmt = $pdo->prepare("INSERT INTO utilisateurs (username, password, mail) VALUES (:username, :password, :mail)");
                 $stmt->execute([
                     ':username' => $username,
-                    ':password' => $hashedPassword
+                    ':password' => $hashedPassword,
+                    ':mail'     => $mail
                 ]);
-                $success = "Utilisateur ajouté avec succès !";
+                header("Location: utilisateurs.php?success=add");
+                exit();
             }
         } catch (Exception $e) {
             $error = "Erreur : " . $e->getMessage();
@@ -56,34 +58,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
 
 // --- RECUPERATION DES UTILISATEURS ---
 $utilisateurs = $pdo->query("SELECT * FROM utilisateurs ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-// Modification d’un utilisateur
+
+// --- MODIFICATION D’UN UTILISATEUR ---
 if (isset($_POST['edit_user'])) {
-    $edit_id = intval($_POST['edit_id']);
+    $edit_id       = intval($_POST['edit_id']);
     $edit_username = trim($_POST['edit_username']);
     $edit_password = trim($_POST['edit_password'] ?? '');
+    $edit_mail     = trim($_POST['edit_mail'] ?? '');
 
-    if ($edit_username === '') {
-        $error = "Le nom d'utilisateur ne peut pas être vide.";
+    if ($edit_username === '' || $edit_mail === '') {
+        $error = "Le nom d'utilisateur et l'email ne peuvent pas être vides.";
     } else {
         try {
-            $pdo = getDbConnection();
-
-            // Vérifier si le nouveau nom existe déjà pour un autre utilisateur
             $stmt = $pdo->prepare("SELECT id FROM utilisateurs WHERE username = :username AND id != :id");
             $stmt->execute([':username' => $edit_username, ':id' => $edit_id]);
+
             if ($stmt->fetch()) {
                 $error = "Ce nom d'utilisateur est déjà utilisé.";
             } else {
-                // Si mot de passe vide, on garde l'ancien
                 if ($edit_password === '') {
-                    $stmt = $pdo->prepare("UPDATE utilisateurs SET username = :username WHERE id = :id");
-                    $stmt->execute([':username' => $edit_username, ':id' => $edit_id]);
+                    $stmt = $pdo->prepare("UPDATE utilisateurs SET username = :username, mail = :mail WHERE id = :id");
+                    $stmt->execute([':username' => $edit_username, ':mail' => $edit_mail, ':id' => $edit_id]);
                 } else {
                     $hashed = password_hash($edit_password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("UPDATE utilisateurs SET username = :username, password = :password WHERE id = :id");
-                    $stmt->execute([':username' => $edit_username, ':password' => $hashed, ':id' => $edit_id]);
+                    $stmt = $pdo->prepare("UPDATE utilisateurs SET username = :username, password = :password, mail = :mail WHERE id = :id");
+                    $stmt->execute([':username' => $edit_username, ':password' => $hashed, ':mail' => $edit_mail, ':id' => $edit_id]);
                 }
-                $success = "Utilisateur modifié avec succès !";
+                header("Location: utilisateurs.php?success=edit");
+                exit();
             }
         } catch (Exception $e) {
             $error = "Erreur : " . $e->getMessage();
@@ -91,113 +93,147 @@ if (isset($_POST['edit_user'])) {
     }
 }
 
-
 include "inc/header.php";
 ?>
+<!-- Contenu principal -->
 <div class="main-content">
-    <h2 class="mb-4 text-center">Gestion des utilisateurs</h2>
-
-    <button type="button" class="btn btn-secondary mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
-         Ajouter un utilisateur
-    </button>
-
-    <?php if(isset($error)) : ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <?php if(isset($success)) : ?>
-        <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
-    <?php endif; ?>
-
-   
-    <table class="table table-striped text-center">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Nom d'utilisateur</th>
-                <th>Mot de passe</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach($utilisateurs as $u): ?>
-                <tr>
-                    <td><?= htmlspecialchars($u['id']) ?></td>
-                    <td><?= htmlspecialchars($u['username']) ?></td>
-                    <td class="text-center">**********</td>
-                    <td>
-                        
-                        <button class="btn btn-warning btn-sm" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#editUserModal<?= $u['id'] ?>">
-                                <i class="fas fa-edit"></i>
-                        </button>
-
-                        
-                        <a href="?delete=<?= $u['id'] ?>" 
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Supprimer cet utilisateur ?');">
-                           <i class="fas fa-trash"></i>
-                        </a>
-                        
-                    </td>
-                </tr>
-
-            <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-               <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Ajouter un utilisateur</h5>
-                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST">
-                        <input type="hidden" name="add_user" value="1">
-                      <div class="mb-3">
-                         <label for="username" class="form-label">Nom d'utilisateur</label>
-                          <input type="text" name="username" id="username" class="form-control" required>
-                      </div>
-                      <div class="mb-3">
-                         <label for="password" class="form-label">Mot de passe</label>
-                         <input type="password" name="password" id="password" class="form-control" required>
-                      </div>
-                      <button type="submit" class="btn btn-success">Ajouter</button>
-                    </form>
-               </div>
-             </div>
+    <div class="d-flex justify-content-center" style="padding: 40px 20px;">
+        <div class="content shadow rounded-3 bg-white p-4 w-100" style="max-width: 1100px;">
+            <div class="text-center mb-4">
+                <h1 class="h3 fw-bold">les Utilisateurs</h1>
             </div>
-          </div>
-          </div>
+            <!-- Bouton ajout utilisateur -->
+            <div class="mb-4 text-end">
+                <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-user-plus me-2"></i> Ajouter un utilisateur
+                </button>
+            </div>
 
-                
-                <div class="modal fade" id="editUserModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title">Modifier l'utilisateur</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        <form method="POST">
-                            <input type="hidden" name="edit_id" value="<?= $u['id'] ?>">
-                            <div class="mb-3">
-                                <label class="form-label">Nom d'utilisateur</label>
-                                <input type="text" name="edit_username" class="form-control" value="<?= htmlspecialchars($u['username']) ?>" required>
+            <!-- Messages de succès/erreur -->
+            <?php if(isset($error)) : ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
+
+            <!-- Tableau utilisateurs -->
+            <div class="table-responsive">
+                <table class="users-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); margin-top: 24px;">
+    <thead>
+        <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">ID</th>
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Nom</th>
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
+        </tr>
+    </thead>
+                    <tbody>
+                        <?php foreach($utilisateurs as $u): ?>
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;">
+                                <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-id"><?= htmlspecialchars($u['id']) ?></td>
+                                <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-name"><?= htmlspecialchars($u['username']) ?></td>
+                                <td class="text-center"><?= htmlspecialchars($u['mail']) ?></td>
+                                <td class="text-center">        
+                                    <!-- Bouton modifier -->
+                                    <button class="btn btn-warning btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editUserModal<?= $u['id'] ?>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <!-- Bouton supprimer -->
+                                    <button class="btn btn-danger btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#confirmDeleteUserModal<?= $u['id'] ?>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Modal modification -->
+                            <div class="modal fade" id="editUserModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Modifier l'utilisateur</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form method="POST">
+                                                <input type="hidden" name="edit_id" value="<?= $u['id'] ?>">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nom d'utilisateur</label>
+                                                    <input type="text" name="edit_username" class="form-control" 
+                                                           value="<?= htmlspecialchars($u['username']) ?>" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" name="edit_mail" class="form-control" 
+                                                           value="<?= htmlspecialchars($u['mail']) ?>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Mot de passe</label>
+                                                    <input type="password" name="edit_password" class="form-control" 
+                                                           placeholder="Laisser vide pour garder le mot de passe actuel">
+                                                </div>
+                                                <button type="submit" name="edit_user" class="btn btn-warning">Modifier</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Mot de passe</label>
-                                <input type="password" name="edit_password" class="form-control" placeholder="Laisser vide pour garder le mot de passe actuel">
+
+                            <!-- Modal suppression -->
+                            <div class="modal fade" id="confirmDeleteUserModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirmation</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Voulez-vous vraiment supprimer l’utilisateur <strong><?= htmlspecialchars($u['username']) ?></strong> ?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                            <a href="?delete=<?= $u['id'] ?>" class="btn btn-danger">Supprimer</a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="submit" name="edit_user" class="btn btn-warning">Modifier</button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
- 
+
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-</body>
-</html>
+
+<!-- Modal ajout utilisateur -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+       <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Ajouter un utilisateur</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+              <form method="POST">
+                  <input type="hidden" name="add_user" value="1">
+                  <div class="mb-3">
+                      <label for="username" class="form-label">Nom d'utilisateur</label>
+                      <input type="text" name="username" id="username" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                      <label for="mail" class="form-label">Email</label>
+                      <input type="email" name="mail" id="mail" class="form-control">
+                  </div>
+                  <div class="mb-3">
+                      <label for="password" class="form-label">Mot de passe</label>
+                      <input type="password" name="password" id="password" class="form-control" required>
+                  </div>
+                  <button type="submit" class="btn-add">Ajouter</button>
+              </form>
+          </div>
+       </div>
+    </div>
+</div>

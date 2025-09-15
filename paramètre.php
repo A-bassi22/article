@@ -68,8 +68,19 @@ try {
 }
 ?>
 
-<div class="main-content">
-    <h2 class="mb-4 text-center">Paramètres du site</h2>
+<main id="main-container">
+        <!-- Page Content -->
+        <div class="content">
+          <!-- Heading -->
+          <div class="block block-rounded">
+            <div class="block-content block-content-full overflow-x-auto">
+              <div class="py-3 text-center">
+                <h1 class="h3 fw-extrabold mb-1">
+                  Paramètres.
+                </h1>
+              </div>
+            </div>
+          </div>
 
     <?php if(isset($success)) : ?>
         <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>

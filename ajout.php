@@ -8,7 +8,7 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 $username = $_SESSION['username'] ?? 'Inconnu';
-
+   
 $pdo = getDbConnection();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -49,6 +49,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     } else {
         die("Image de couverture requise.");
+         $now = new DateTime();
+    $valueInput = $now->format('Y-m-d\TH:i'); // format pour l'input
+    $valueDisplay = $now->format('d/m/Y H:i'); // format lisible
     }
 
     $image_principale_chemin = 'uploads/' . $image_principale;
@@ -105,61 +108,86 @@ try {
 include "inc/header.php";
 ?>
 
+<!-- Contenu principal -->
 <div class="main-content">
-    <div>
-        <a href="accueil.php" class="btn btn-secondary mb-3">
-            <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
-        </a>
-        <h2 class="mb-4 text-center">Ajouter un article</h2>
+    <div class="d-flex justify-content-center" style="padding: 40px 20px;">
+        <div class="content shadow rounded-3 bg-white p-4 w-100" style="max-width: 1100px;">
+    <div class="container mx-auto" style="max-width: 900px; margin-top: 32px;">
+
+            <!-- Bouton retour -->
+            <div class="mb-4">
+                <a href="accueil.php" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Retour à la liste des articles
+                </a>
+            </div>
+
+            <!-- Titre -->
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">Ajouter un article</h2>
+            </div>
+
+            <!-- Formulaire -->
+            <form method="POST" enctype="multipart/form-data">
+
+                <!-- Titre -->
+                <div class="mb-3">
+                    <label class="form-label">Titre :</label>
+                    <input type="text" class="form-control" name="titre" required>
+                </div>
+
+                <!-- Contenu -->
+                <div class="mb-3">
+                    <label class="form-label">Contenu :</label>
+                    <textarea class="form-control" name="contenu" rows="4" required></textarea>
+                </div>
+
+                <!-- Catégorie -->
+                <div class="mb-3">
+                    <label class="form-label">Catégorie :</label>
+                    <select name="categorie" class="form-select" required>
+                        <option value="">-- Choisissez une catégorie --</option>
+                        <?php foreach ($categories as $catName): ?>
+                            <option value="<?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Date -->
+                <div class="mb-3">
+                    <input type="datetime-local" 
+                      id="date" 
+                      name="date" 
+                      class="form-control form-control-lg rounded-pill"
+                      value="<?= $valueInput; ?>">
+                    <small class="text-muted">Date actuelle : <?= $valueDisplay; ?></small>
+                </div>
+
+                <!-- Image principale -->
+                <div class="mb-3">
+                    <label class="form-label">Image principale :</label>
+                    <input type="file" name="image" accept="image/*" class="form-control" required>
+                </div>
+
+                <!-- Galerie -->
+                <div class="mb-3">
+                    <label class="form-label">Images supplémentaires (galerie) :</label>
+                    <input type="file" name="images[]" multiple accept="image/*" class="form-control">
+                </div>
+
+                <!-- Bouton -->
+                <div class="text-end">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-save me-1"></i> Enregistrer 
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
-
-    <form method="POST" enctype="multipart/form-data" class="p-4 bg-white rounded shadow-sm">
-        <div class="mb-3">
-            <label class="form-label">Titre :</label>
-            <input type="text" class="form-control" name="titre" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Contenu :</label>
-            <textarea class="form-control" name="contenu" rows="4" required></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Catégorie :</label>
-            <select name="categorie" class="form-select" required>
-                <option value="">-- Choisissez une catégorie --</option>
-                <?php foreach ($categories as $catName): ?>
-                    <option value="<?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?>">
-                        <?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <input type="datetime-local" 
-           id="date" 
-           name="date" 
-           class="form-control form-control-lg rounded-pill"
-           value="<?php echo date('Y-m-d\TH:i'); ?>">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Image principale :</label>
-            <input type="file" name="image" accept="image/*" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Images supplémentaires (galerie) :</label>
-            <input type="file" name="images[]" multiple accept="image/*" class="form-control">
-        </div>
-
-        <div class="text-end">
-           <button type="submit" class="btn btn-secondary mb-3">
-            <i class="fas fa-save me-1"></i> Enregistrer 
-        </button>
-        </div>
-    </form>
+</div>
+</div>
 </div>
 </body>
 </html>

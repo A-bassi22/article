@@ -5,9 +5,9 @@ include "inc/header.php";
 $_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
 
 if (!isset($_SESSION['username'])) {
-    die("Vous devez être connecté !");
+    header("Location: login.php");
+    exit();
 }
-
 try {
     $pdo = getDbConnection();
 } catch (Exception $e) {
@@ -67,14 +67,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category'])) {
 $categories = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="main-content container mt-4">
-    <h2 class="mb-4 text-center">Gestion des catégories</h2>
-
-   
-    <button type="button" class="btn btn-secondary mb-3" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-        + Ajouter une catégorie
-    </button>
-
+<div class="main-content">
+    <div class="d-flex justify-content-center" style="padding: 40px 20px;">
+        <div class="content shadow rounded-3 bg-white p-4 w-100" style="max-width: 1100px;">
+          <div class="text-center mb-4">
+                <h1 class="h3 fw-bold">les catègories</h1>
+            </div>
+            <div class="mb-4 text-end">
+              <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                 + Ajouter une catégorie
+              </button>
+           </div>
     <?php if(isset($error)) : ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
@@ -82,40 +85,33 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll(
         <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
     <?php endif; ?>
 
-    
-    <table class="table table-striped table-bordered text-center">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Description</th>
-                <th>Actions</th>
-            </tr>
+    <div class="table-responsive">
+                <table class="users-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); margin-top: 24px;">
+            <thead>
+        <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">ID</th>
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Nom</th>
+            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
+        </tr>
         </thead>
         <tbody>
             <?php foreach($categories as $c): ?>
-                <tr>
-                    <td><?= htmlspecialchars($c['id']) ?></td>
-                    <td><?= htmlspecialchars($c['nom']) ?></td>
-                    <td><?= htmlspecialchars($c['description']) ?></td>
-                    <td>
-                        <!-- Bouton Modifier -->
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;">
+                    <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-id"><?= htmlspecialchars($c['id']) ?></td>
+                    <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-name"><?= htmlspecialchars($c['nom']) ?></td>
+                    <td class="text-center"><!-- Bouton Modifier -->
                         <button class="btn btn-warning btn-sm" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#editCategoryModal<?= $c['id'] ?>">
                             <i class="fas fa-edit"></i>
                         </button>
-
                         <!-- Bouton Supprimer -->
-                        <a href="?delete=<?= $c['id'] ?>" 
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Supprimer cette catégorie ?');">
-                           <i class="fas fa-trash"></i>
-                        </a>
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteCatModal<?= $c['id'] ?>">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
-
-                <!-- Modal Modifier catégorie -->
+                 <!-- Modal Modifier catégorie -->
                 <div class="modal fade" id="editCategoryModal<?= $c['id'] ?>" tabindex="-1" aria-hidden="true">
                   <div class="modal-dialog">
                     <div class="modal-content">
@@ -131,10 +127,6 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll(
                                 <label class="form-label">Nom</label>
                                 <input type="text" name="edit_nom" class="form-control" value="<?= htmlspecialchars($c['nom']) ?>" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea name="edit_description" class="form-control"><?= htmlspecialchars($c['description']) ?></textarea>
-                            </div>
                             <button type="submit" class="btn btn-warning btn-sm">Enregistrer les modifications</button>
                         </form>
                       </div>
@@ -142,6 +134,23 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll(
                   </div>
                 </div>
 
+                 <div class="modal fade" id="confirmDeleteCatModal<?= $c['id'] ?>" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                         <div class="modal-header">
+                             <h5 class="modal-title">Confirmation</h5>
+                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                         </div>
+                         <div class="modal-body">
+                         Voulez-vous vraiment supprimer cette catégorie ?
+                         </div>
+                         <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                              <a href="?delete=<?= $c['id'] ?>" class="btn btn-danger">Supprimer</a>
+                         </div>
+                      </div>
+                  </div>
+                </div>
             <?php endforeach; ?>
         </tbody>
     </table>
@@ -162,17 +171,13 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY id ASC")->fetchAll(
                 <label class="form-label">Nom de la catégorie</label>
                 <input type="text" name="nom" class="form-control" required>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea name="description" class="form-control"></textarea>
-            </div>
-            <button type="submit" class="btn btn-success">Ajouter</button>
+            <button type="submit" class="btn-add"">Ajouter</button>
         </form>
       </div>
     </div>
   </div>
 </div>
-
-<?php include "inc/footer.php"; ?>
+ </div>
+</div>
 </body>
 </html>
