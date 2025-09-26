@@ -12,14 +12,13 @@ $erreur = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    
-     $recaptcha_secret = "6Ld7i9MrAAAAACbtL1CIPhhEViSigvnDgid2X4bS";
+    ;
      $recaptcha_response = $_POST['g-recaptcha-response'] ?? '';
      $recaptcha_valid = false;
 
      if ($recaptcha_response) {
          $ch = curl_init();
-         curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
+
          curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
              'secret'   => $recaptcha_secret,
@@ -68,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion</title>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link rel="alternate" type="application/rss+xml" title="Flux RSS - Mon Site" href="rss.php">
@@ -177,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </label>
         <input type="password" class="form-control" id="password" name="password" placeholder="Votre mot de passe">
       </div>
-      <div class="g-recaptcha" data-sitekey="6Ld7i9MrAAAAACFQkoGB5iZY6o_oeWQn2tHMio0f"></div>
+      <div class="g-recaptcha" data-sitekey=""></div>
       <br>
       <button type="submit" class="btn btn-login w-100">
         <i class="fas fa-sign-in-alt me-2"></i>Se connecter
