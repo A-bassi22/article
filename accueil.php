@@ -5,16 +5,18 @@ require_once("bd.php");
 $_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
 
 if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+    header("Location: login");
     exit();
 }
 
 $username = $_SESSION['username'];
 
-// Récupérer les catégories
+
 try {
     $pdo = getDbConnection();
-    $categories = $pdo->query("SELECT nom FROM categories ORDER BY id")->fetchAll(PDO::FETCH_COLUMN);
+    // Récupérer ID et nom des catégories
+    $stmtCat = $pdo->query("SELECT id, nom FROM categories ORDER BY id");
+    $categories = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $categories = [];
 }
@@ -84,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['titre'])) {
     exit();
 }
 
-// Filtres & Pagination
+// Filtres & Pagination (inchangés)
 $selectedCategory = isset($_GET['categorie']) ? trim($_GET['categorie']) : '';
 $searchKeyword = isset($_GET['recherche']) ? trim($_GET['recherche']) : '';
 
@@ -122,60 +124,71 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="main-content">
     <div class="d-flex justify-content-center" style="padding: 40px 20px;">
         <div class="content shadow rounded-3 bg-white p-4 w-100" style="max-width: 1100px;">
-
             <!-- Titre + Bouton Ajouter -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 fw-bold text-dark">LES ARTICLES</h1>
+                <h1 class="h3 fw-bold text-dark">Gestion des articles</h1>
             </div>
             <div class="mb-4 text-end">
                 <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#addArticleModal">
-                    <i class="fas fa-plus me-1"></i>Ajouter un article
+                    <i class="fas fa-plus me-1"></i>Ajouter
                 </button>
               </div>
             <!-- Filtres -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body">
-                    <form method="get" class="row gx-2 gy-2">
-                        <div class="col-md-5">
-                            <select name="categorie" class="form-select">
+                    <div class="row gx-2 gy-2 align-items-end">
+                        <!-- Sélection par ID de catégorie -->
+                        <div class="col-md-4">
+                            <label for="categorieSelect" class="form-label visually-hidden">Catégorie</label>
+                            <select id="categorieSelect" class="form-select">
                                 <option value="">Toutes les catégories</option>
                                 <?php foreach ($categories as $cat): ?>
-                                    <option value="<?= htmlspecialchars($cat) ?>" <?= ($cat === $selectedCategory) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($cat) ?>
+                                    <option value="<?= $cat['id'] ?>">
+                                        <?= htmlspecialchars($cat['nom']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-5">
-                            <input type="text" name="recherche" class="form-control" placeholder="Rechercher un article..." value="<?= htmlspecialchars($searchKeyword) ?>">
+
+                        <!-- Recherche en temps réel -->
+                        <div class="col-md-8">
+                            <label for="searchLive" class="form-label visually-hidden">Rechercher</label>
+                            <input 
+                                type="text" 
+                                id="searchLive" 
+                                class="form-control" 
+                                placeholder="Rechercher (titre, auteur, catégorie)..."
+                            >
                         </div>
-                        <div class="col-md-2 d-grid">
-                            <button type="submit" class="btn btn-secondary"><i class="fas fa-search me-1"></i> Filtrer</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
             <!-- Tableau des articles -->
             <div class="table-responsive">
-               <div class="table-responsive">
+            
                 <table class="users-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); margin-top: 24px;">
-                     <thead>
-        <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
+         <thead>
+         <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
             <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Photo</th>
             <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Titre</th>
             <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
             <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Catégorie</th>
-            <th  style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Date d'ajout</th>
-            <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Auteur</th>
-            <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
-        </tr>
-    </thead>
+            <th class="text-center" style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Date d'ajout</th>
+            <th style="padding: 16px 20px; text-align: center; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Auteur</th>
+            <th class="actions-col">Actions</th>
+         </tr>
+         </thead>
                     <tbody>
                         <?php if (empty($articles)): ?>
                             <tr><td colspan="7" class="text-center text-muted">Aucun article trouvé.</td></tr>
                         <?php else: ?>
                             <?php foreach ($articles as $article): ?>
-                                 <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;">
+                                 <tr class="article-row"
+                                     data-id="<?= $article['id'] ?>"
+                                     data-titre="<?= htmlspecialchars(strtolower($article['titre'])) ?>"
+                                     data-auteur="<?= htmlspecialchars(strtolower($article['auteur'] ?? '')) ?>"
+                                     data-categorie-id="<?= $article['categorie_id'] ?? '' ?>"
+                                     data-categorie-nom="<?= htmlspecialchars(strtolower($article['categorie'])) ?>">
                                     <td class="text-center" style="padding: 16px 20px; text-align: center; color: #334155; font-size: 15px;">
                                         <?php if (!empty($article['image_principale'])): ?>
                                             <img src="<?= htmlspecialchars($article['image_principale']) ?>" alt="Image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px;">
@@ -196,14 +209,14 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td class="text-center" style="padding: 16px 20px; text-align: center; color: #334155; font-size: 15px;">
                                         <?= htmlspecialchars($article['auteur'] ?? 'Inconnu') ?>
                                     </td>
-                                    <td class="text-center" style="padding: 16px 20px; text-align: left; color: #334155; font-size: 15px;">
-                                        <a href="details_article.php?id=<?= $article['id'] ?>" class="btn btn-primary btn-sm me-1" title="Voir"><i class="fas fa-eye"></i></a>
-
-                                        <a href="modifier_article.php?id=<?= $article['id'] ?>" class="btn btn-warning btn-sm me-1" title="Modifier"><i class="fas fa-edit"></i></a>
-
-                                        <button type="button" class="btn btn-danger btn-sm" title="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteArticleModal<?= $article['id'] ?>"><i class="fas fa-trash"></i></button>
+                                    <td class="text-center" style="text-align: center; color: #334155; font-size: 15px;">
+                                         <a href="#" class="btn btn-warning btn-sm me-1" title="Modifier" data-bs-toggle="modal" data-bs-target="#editArticleModal" data-article-id="<?= $article['id'] ?>">
+    <i class="fas fa-edit"></i>
+</a>
+                                        <button type="button" class="btn btn-danger btn-sm m1" title="Supprimer" data-bs-toggle="modal" data-bs-target="#confirmDeleteArticleModal<?= $article['id'] ?>"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
+
 
                                 <!-- Modal suppression -->
                                 <div class="modal fade" id="confirmDeleteArticleModal<?= $article['id'] ?>" tabindex="-1" aria-hidden="true">
@@ -228,8 +241,8 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <?php if ($totalPages > 1): ?>
+              <!-- Pagination -->
+               <?php if ($totalPages > 1): ?>
                 <nav class="mt-4" aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
                         <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
@@ -245,8 +258,8 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </li>
                     </ul>
                 </nav>
-            <?php endif; ?>
-
+              <?php endif; ?>
+          </div>
         </div>
     </div>
 </div>
@@ -273,8 +286,8 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label class="form-label">Catégorie :</label>
                         <select name="categorie" class="form-select" required>
                             <option value="">-- Choisissez une catégorie --</option>
-                            <?php foreach ($categories as $catName): ?>
-                                <option value="<?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= htmlspecialchars($cat['nom'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($cat['nom'], ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -298,6 +311,37 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 </div>
+<!-- Modal pour modifier l'article -->
+<div class="modal fade" id="editArticleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl"  style="max-width: 95vw; max-height: 95vh;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editArticleModalLabel">Modifier l'article</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="editArticleIframe" src="" frameborder="0" style="width: 100%; height: 85vh;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editArticleModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const articleId = button.getAttribute('data-article-id');
+        const iframe = editModal.querySelector('#editArticleIframe');
+        iframe.src = 'modifier_article.php?id=' + articleId + '&modal=1';
+    });
+    
+    editModal.addEventListener('hidden.bs.modal', function () {
+        const iframe = editModal.querySelector('#editArticleIframe');
+        iframe.src = '';
+    });
+});
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -310,5 +354,40 @@ $articles = $stmt->fetchAll(PDO::FETCH_ASSOC);
         const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
         const datetimeInput = document.getElementById('date');
         if (datetimeInput) datetimeInput.value = defaultDateTime;
+    });
+
+    // Filtrage en temps réel
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchLive');
+        const categorieSelect = document.getElementById('categorieSelect');
+        const articleRows = document.querySelectorAll('.article-row');
+
+        function filterArticles() {
+            const searchText = searchInput.value.toLowerCase().trim();
+            const selectedCatId = categorieSelect.value;
+
+            articleRows.forEach(row => {
+                const titre = row.dataset.titre || '';
+                const auteur = row.dataset.auteur || '';
+                const catNom = row.dataset.categorieNom || '';
+                const catId = row.dataset.categorieId || '';
+
+                // Vérifier la catégorie
+                const categoryMatch = !selectedCatId || catId === selectedCatId;
+
+                // Vérifier la recherche (début des mots)
+                const textMatch = (
+                    searchText === '' ||
+                    titre.startsWith(searchText) ||
+                    auteur.startsWith(searchText) ||
+                    catNom.startsWith(searchText)
+                );
+
+                row.style.display = (categoryMatch && textMatch) ? '' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', filterArticles);
+        categorieSelect.addEventListener('change', filterArticles);
     });
 </script>

@@ -1,10 +1,11 @@
 <?php
 session_start();
+
 require_once("bd.php");
 $_SESSION['last_page'] = basename($_SERVER['PHP_SELF']); 
 
 if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
+    header("Location: login");
     exit();
 }
 
@@ -31,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
 
     if ($username === "" || $password === "" || $mail === "") {
         $error = "Tous les champs sont obligatoires.";
+    } elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+        $error = "L'adresse email n'est pas valide.";
+    } elseif (strlen($password) > 128) {
+        $error = "Le mot de passe est trop long (max. 128 caractères).";
     } else {
         try {
             $stmt = $pdo->prepare("SELECT id FROM utilisateurs WHERE username = :username");
@@ -68,6 +73,10 @@ if (isset($_POST['edit_user'])) {
 
     if ($edit_username === '' || $edit_mail === '') {
         $error = "Le nom d'utilisateur et l'email ne peuvent pas être vides.";
+    } elseif (!filter_var($edit_mail, FILTER_VALIDATE_EMAIL)) {
+        $error = "L'adresse email n'est pas valide.";
+    } elseif ($edit_password !== '' && strlen($edit_password) > 128) {
+        $error = "Le mot de passe est trop long (max. 128 caractères).";
     } else {
         try {
             $stmt = $pdo->prepare("SELECT id FROM utilisateurs WHERE username = :username AND id != :id");
@@ -99,13 +108,13 @@ include "inc/header.php";
 <div class="main-content">
     <div class="d-flex justify-content-center" style="padding: 40px 20px;">
         <div class="content shadow rounded-3 bg-white p-4 w-100" style="max-width: 1100px;">
-            <div class="text-center mb-4">
-                <h1 class="h3 fw-bold">les Utilisateurs</h1>
+            <div class="mb-4">
+                <h1 class="h3 fw-bold">Gestion des utilusateurs</h1>
             </div>
             <!-- Bouton ajout utilisateur -->
             <div class="mb-4 text-end">
                 <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="fas fa-user-plus me-2"></i> Ajouter un utilisateur
+                    <i class="fas fa-user-plus me-2"></i>Ajouter
                 </button>
             </div>
 
@@ -114,21 +123,37 @@ include "inc/header.php";
                 <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
+            <?php if (isset($_GET['success'])): ?>
+                <?php
+                $messages = [
+                    'add' => "Utilisateur ajouté avec succès !",
+                    'edit' => "Utilisateur mis à jour avec succès !",
+                    'delete' => "Utilisateur supprimé avec succès !"
+                ];
+                $type = $_GET['success'];
+                if (isset($messages[$type])):
+                ?>
+                    <div class="alert alert-success"><?= htmlspecialchars($messages[$type]) ?></div>
+                <?php endif; ?>
+            <?php endif; ?>
+
             <!-- Tableau utilisateurs -->
             <div class="table-responsive">
                 <table class="users-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03); margin-top: 24px;">
-    <thead>
-        <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
-            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">ID</th>
-            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Nom</th>
-            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
-            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
-        </tr>
-    </thead>
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #02c2fe, #02a8d6); color: white;">
+                            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">ID</th>
+                            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Nom</th>
+                            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Email</th>
+                            <th class="text-center" style="padding: 16px 20px; text-align: left; font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">Actions</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <?php foreach($utilisateurs as $u): ?>
+                        <?php 
+                        $counter = 1; 
+                        foreach($utilisateurs as $u): ?>
                             <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;">
-                                <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-id"><?= htmlspecialchars($u['id']) ?></td>
+                                <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-id"><?= $counter++ ?></td>
                                 <td class="text-center" style="padding: 16px 20px; color: #334155; font-size: 15px;" class="user-name"><?= htmlspecialchars($u['username']) ?></td>
                                 <td class="text-center"><?= htmlspecialchars($u['mail']) ?></td>
                                 <td class="text-center">        
@@ -167,7 +192,7 @@ include "inc/header.php";
                                                 <div class="mb-3">
                                                     <label class="form-label">Email</label>
                                                     <input type="email" name="edit_mail" class="form-control" 
-                                                           value="<?= htmlspecialchars($u['mail']) ?>">
+                                                           value="<?= htmlspecialchars($u['mail']) ?>" required>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label class="form-label">Mot de passe</label>
@@ -183,7 +208,7 @@ include "inc/header.php";
 
                             <!-- Modal suppression -->
                             <div class="modal fade" id="confirmDeleteUserModal<?= $u['id'] ?>" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title">Confirmation</h5>
@@ -225,11 +250,11 @@ include "inc/header.php";
                   </div>
                   <div class="mb-3">
                       <label for="mail" class="form-label">Email</label>
-                      <input type="email" name="mail" id="mail" class="form-control">
+                      <input type="email" name="mail" id="mail" class="form-control" required>
                   </div>
                   <div class="mb-3">
                       <label for="password" class="form-label">Mot de passe</label>
-                      <input type="password" name="password" id="password" class="form-control" required>
+                      <input type="password" name="password" id="password" class="form-control" required minlength="6">
                   </div>
                   <button type="submit" class="btn-add">Ajouter</button>
               </form>
